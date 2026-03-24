@@ -33,6 +33,7 @@ export const NECESSARY_PORTS = [5551, 8545, 5600, 5433, 50211, 8082, 6379];
 export const OPTIONAL_PORTS = [7546, 8080, 3000];
 export const EVM_ADDRESSES_BLOCKLIST_FILE_RELATIVE_PATH = '../../compose-network/network-node'
 export const NETWORK_NODE_CONFIG_DIR_PATH = 'compose-network/network-node/data/config';
+export const NETWORK_NODE_KEYS_DIR_PATH = 'compose-network/network-node/data/keys';
 export const APPLICATION_YML_RELATIVE_PATH = 'compose-network/mirror-node/application.yml';
 export const NGINX_CONFIG_RELATIVE_PATH = 'compose-network/nginx/api-proxy.conf';
 export const MIN_MEMORY_SINGLE_MODE = 4;
@@ -106,6 +107,9 @@ export const INIT_STATE_BOOTSTRAPPED_PROP_SET = `${CHECK_SUCCESS} Needed bootsra
 export const INIT_STATE_MIRROR_PROP_SET = `${CHECK_SUCCESS} Needed mirror node properties were set for this configuration.`;
 export const INIT_STATE_NO_NODE_CONF_NEEDED = `${CHECK_SUCCESS} No additional node configuration needed.`;
 export const INIT_STATE_NO_ENV_VAR_CONFIGURED = `${CHECK_SUCCESS} No new environment variables were configured.`;
+export const INIT_STATE_GENERATE_NODE_KEYS = `${LOADING} Generating node keys...`;
+export const INIT_STATE_GENERATE_NODE_KEYS_SUCCESS = `${CHECK_SUCCESS} Node keys generated successfully.`;
+export const INIT_STATE_GENERATE_NODE_KEYS_ERROR = 'Failed to generate node keys.';
 
 // StateController
 export const STATE_CONTROLLER_MISSING_STATE_CONFIG_ERROR = `${CHECK_FAIL} Something is wrong with state configuration!`;

@@ -23,6 +23,9 @@ import {
     CHECK_SUCCESS,
     INIT_STATE_BOOTSTRAPPED_PROP_SET,
     INIT_STATE_CONFIGURING_ENV_VARIABLES_FINISH,
+    INIT_STATE_GENERATE_NODE_KEYS,
+    INIT_STATE_GENERATE_NODE_KEYS_ERROR,
+    INIT_STATE_GENERATE_NODE_KEYS_SUCCESS,
     INIT_STATE_INIT_MESSAGE,
     INIT_STATE_MIRROR_PROP_SET,
     INIT_STATE_NO_ENV_VAR_CONFIGURED,
@@ -33,6 +36,7 @@ import {
     LOADING,
     NECESSARY_PORTS,
     NETWORK_NODE_CONFIG_DIR_PATH,
+    NETWORK_NODE_KEYS_DIR_PATH,
     NGINX_CONFIG_RELATIVE_PATH,
     OPTIONAL_PORTS
 } from '../constants';
@@ -135,6 +139,9 @@ export class InitState implements IState{
         this.configureNodeProperties(configurationData.nodeConfiguration?.properties);
         this.configureMirrorNodeProperties();
         await this.setupNginxProxyConfig();
+        if (!this.generateNodeKeys()) {
+            return;
+        }
 
         this.observer!.update(EventType.Finish);
     }
@@ -161,8 +168,45 @@ export class InitState implements IState{
     }
 
     /**
+     * Runs the pcli generate-keys command inside the consensus node container to populate
+     * the node keys directory before the network starts.
+     * @returns {boolean} True if key generation succeeded, false otherwise.
+     * @private
+     */
+    private generateNodeKeys(): boolean {
+        const image = `${process.env.NETWORK_NODE_IMAGE_PREFIX}${process.env.NETWORK_NODE_IMAGE_NAME}:${process.env.NETWORK_NODE_IMAGE_TAG}`;
+        const keysPath = join(__dirname, '../../', NETWORK_NODE_KEYS_DIR_PATH);
+        const containerKeysPath = '/opt/hgcapp/services-hedera/HapiApp2.0/data/keys';
+
+        this.logger.info(INIT_STATE_GENERATE_NODE_KEYS, this.stateName);
+
+        const result = shell.exec(
+            `docker run --rm \
+                -w /opt/hgcapp/services-hedera/HapiApp2.0 \
+                -v "${keysPath}:${containerKeysPath}" \
+                --entrypoint java \
+                "${image}" \
+                -cp 'data/lib/*' \
+                org.hiero.consensus.pcli.Pcli \
+                generate-keys -p ${containerKeysPath} 0 1 2 3`
+        );
+
+        if (result.code !== 0) {
+            this.logger.error(INIT_STATE_GENERATE_NODE_KEYS_ERROR, this.stateName);
+            this.observer!.update(EventType.UnresolvableError);
+            return false;
+        }
+
+        shell.chmod(600, `${keysPath}/s-private-node*.pem`);
+        shell.chmod(644, `${keysPath}/s-public-node*.pem`);
+
+        this.logger.info(INIT_STATE_GENERATE_NODE_KEYS_SUCCESS, this.stateName);
+        return true;
+    }
+
+    /**
      * Prepares the work directory.
-     * 
+     *
      * This method logs the path to the work directory, creates ephemeral directories in the work directory, and defines the source paths for the config directory, the mirror node application YAML file, and the record parser.
      * It creates a map of the source paths to the destination paths in the work directory and copies the files from the source paths to the destination paths.
      * 

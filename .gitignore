@@ -163,3 +163,7 @@ network-logs/minio-server/data/**
 
 ### Codecov coverage report files directory
 coverage
+
+### Node key files (generated at startup, private keys must never be committed)
+compose-network/network-node/data/keys/s-private-*.pem
+compose-network/network-node/data/keys/s-public-*.pem
